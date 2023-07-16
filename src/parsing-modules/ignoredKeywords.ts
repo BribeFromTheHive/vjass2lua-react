@@ -47,3 +47,5 @@ export const ignoredVJassKeywords = [
     'debug',
     'operator',
 ] as const;
+
+export type IgnoredKeyword = (typeof ignoredVJassKeywords)[number];

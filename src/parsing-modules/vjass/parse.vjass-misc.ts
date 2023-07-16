@@ -5,6 +5,7 @@ const find = {
     staticIfs: /^( *)static +if\b/gm, //static-if is a vJass compile-time optimization, which Lua doesn't have.
     exists: /[.]exists\b/g, //This vJass feature is the same as simply reading the variable in Lua.
     methodCalls: /(.)[.]([$\w.]+) *[(]/gm,
+    lastDotInSeq: /\.([^.]*$)/,
     dynamicArrays:
         /^( *)(?:private|public)* *type +(\w+) +extends +(\w+) +array *\[ *(\d+) *]/g,
     interfaces: /^( *)interface\b +([$\w]+)(.*?)^ *endinterface/gm,
@@ -19,11 +20,13 @@ export const parsePreLocals = (mainParsedStr: string) =>
     mainParsedStr
         .replace(find.staticIfs, '$1if')
         .replace(find.exists, '')
-        .replace(
-            find.methodCalls,
-            (_, firstChar, methodCaller) =>
+        .replace(find.methodCalls, (_, firstChar, methodCaller) =>
+            `${
+                //Lua doesn't understand an isolated '.' as valid syntax, so we need to input 'self' as a prefix.
+                firstChar === ' ' ? ' self' : firstChar
+            }.${methodCaller}(`
                 //treat all x.method() as x:method() just in case we need to pass x as "self".
-                `${firstChar === ' ' ? ' self' : firstChar}:${methodCaller}(`,
+                .replace(find.lastDotInSeq, ':$1'),
         )
         .replace(
             find.dynamicArrays,

@@ -146,7 +146,7 @@ const parseZincFunctions = (str: string) => {
             const pos3 = parseBracketContents(remainder, 'function', 1);
 
             if (pos3 < 0)
-                alert(
+                throw new Error(
                     'syntax error: function without end bracket: ' +
                         funcParts[0],
                 );

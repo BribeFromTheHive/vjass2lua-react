@@ -26,7 +26,6 @@ export function parseLoops(loops: string, config: ConfigModel) {
         ? '$&'
         : 'repeat$<body>$<trailingWhitespace>until$<conditionLine>';
     return loops.repeatAction((loops) => {
-        console.log('looking for loops in: ', loops);
         return loops.replace(find.loops, (_, indent: string, loop: string) =>
             loop
                 .replace(

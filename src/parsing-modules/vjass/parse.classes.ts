@@ -1,6 +1,7 @@
 import { ignoredKeywords, seekLineBreakR } from '../parseHelpers.ts';
 import { captureVariable } from './parse.vjass-misc';
 import { parseVariable } from '../jass/parse.variable.ts';
+import { IgnoredKeyword } from '../ignoredKeywords.ts';
 
 const find = {
     structs_or_modules:
@@ -37,17 +38,13 @@ const find = {
     variables: /(?<!function[\s\S]+)([\w$]+) +([\w$]+)/g,
 };
 
-export const parseStructVar = (
-    wholeMatch: string,
-    w1: string,
-    w2: string,
-    _: number,
-    wholeContext: string,
-) => {
-    if (ignoredKeywords.has(w1) || ignoredKeywords.has(w2)) {
+export const parseStructVar = (wholeMatch: string, w1: string, w2: string) => {
+    if (
+        ignoredKeywords.has(w1 as IgnoredKeyword) ||
+        ignoredKeywords.has(w2 as IgnoredKeyword)
+    ) {
         return wholeMatch;
     }
-    console.log(`struct var: ${w1} and ${w2} from ${wholeContext}`);
     return 'thistype.' + parseVariable(wholeMatch);
 };
 
