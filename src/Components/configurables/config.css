@@ -1,0 +1,73 @@
+.config-details {
+    padding: 1rem;
+    overflow: auto;
+    position: relative;
+    grid-area: config;
+    display: block;
+}
+
+.config-summary {
+    position: absolute;
+}
+
+.config-icon {
+    font-size: 22px;
+    font-family: sans-serif;
+}
+
+.config-label {
+    display: flex;
+    align-items: center;
+}
+
+.config-label,
+.form-check {
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.spacing-text {
+    margin-right: 10px;
+}
+
+.custom-select {
+    width: 60px;
+}
+
+.option-label {
+    display: inline-flex;
+    align-items: center;
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-width: 100%;
+}
+
+input[type='checkbox'] {
+    appearance: none;
+    background-color: #f1f1f1;
+    border: 1px solid #c6c6c6;
+    border-radius: 3px;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    outline: none;
+    transition: background-color 0.2s;
+}
+
+input[type='checkbox']:checked {
+    background-color: #4caf50;
+    border: 1px solid #4caf50;
+}
+
+input[type='checkbox']:checked::after {
+    content: '';
+    display: block;
+    width: 6px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg) translate(-100%, -25%);
+    position: relative;
+    top: 50%;
+    left: 50%;
+}

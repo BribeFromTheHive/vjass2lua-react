@@ -1,0 +1,15 @@
+.footer {
+    grid-area: footer;
+    display: flex;
+    flex-direction: column;
+}
+
+.footer .tab-buttons {
+    display: flex;
+    flex-direction: row;
+}
+
+.footer .tab-buttons button {
+    flex: 1;
+    margin: 0.5rem;
+}
