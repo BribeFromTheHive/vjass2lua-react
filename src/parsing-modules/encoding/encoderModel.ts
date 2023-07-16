@@ -20,7 +20,7 @@ const packageConfigurations = [
     { whichType: 'zincpublic', encoding: 'pub' },
 ] as const;
 
-packageConfigurations.forEach(({ whichType, encoding }) => {
+for (const { whichType, encoding } of packageConfigurations) {
     const array = new Array<string>();
     const code = `${
         ['string', 'rawcode'].includes(whichType) ? '`' : '•'
@@ -49,4 +49,4 @@ packageConfigurations.forEach(({ whichType, encoding }) => {
         }
         return str;
     };
-});
+}

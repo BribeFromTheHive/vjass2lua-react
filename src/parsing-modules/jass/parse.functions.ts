@@ -94,7 +94,7 @@ export const parseFunctions = (functions: string, config: ConfigModel) => {
                             (div) => div[0] + '//' + div[2],
                         );
 
-                    func = func.slice(0, -1); //remove the last space
+                    func = func.trim();
                     if (rtype !== 'nothing') {
                         rtype = convertJASSTypeToLua(rtype);
                         if (config.useAlias) {
@@ -133,13 +133,18 @@ export const parseFunctions = (functions: string, config: ConfigModel) => {
                     }
                     if (!find.nothing.test(params)) {
                         //console.log("params:", params);
-                        argsResult = params.replace(
-                            getArgPairs,
-                            (_, type: string, name: string) => {
-                                doEmmyParse(convertJASSTypeToLua(type), name);
-                                return name;
-                            },
-                        );
+                        argsResult = params
+                            .trim()
+                            .replace(
+                                getArgPairs,
+                                (_, type: string, name: string) => {
+                                    doEmmyParse(
+                                        convertJASSTypeToLua(type),
+                                        name,
+                                    );
+                                    return name;
+                                },
+                            );
                     }
 
                     let emmyResult = '',

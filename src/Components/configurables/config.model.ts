@@ -37,14 +37,13 @@ export const configOptions = {
         label: 'Use @type one-liner instead of multi-line @param',
         defaultValue: true,
     },
-};
+} as const;
 
 export type ConfigOptionKey = keyof typeof configOptions;
 export type ConfigModel = { [K in ConfigOptionKey]: boolean };
 
 export const configOptionKeys = Object.keys(configOptions) as ConfigOptionKey[];
 
-export const configModel = configOptionKeys.reduce((acc, key) => {
-    acc[key] = configOptions[key].defaultValue;
-    return acc;
-}, {} as ConfigModel);
+export const configModel = Object.fromEntries(
+    configOptionKeys.map((key) => [key, configOptions[key].defaultValue]),
+) as ConfigModel;
