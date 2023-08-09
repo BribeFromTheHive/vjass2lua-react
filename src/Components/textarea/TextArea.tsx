@@ -2,9 +2,11 @@ import { useContext } from 'react';
 import { transcompile } from '../../parsing-modules/transcompile.ts';
 import { ConfigContext } from '../../ConfigContext.ts';
 import MonacoEditor from '@monaco-editor/react';
-import { setupJass } from 'monaco-jass-highlighter';
+import { wireJASSTmGrammars } from 'monaco-jass-highlighter';
+import { loadWASM } from 'onigasm';
+import wasmURL from '../../../node_modules/onigasm/lib/onigasm.wasm?url';
 
-setupJass('/node_modules/onigasm/lib/onigasm.wasm').catch(console.error);
+loadWASM(wasmURL).catch(console.error);
 
 const options = {
     selectOnLineNumbers: true,
@@ -25,6 +27,8 @@ const EditorComponent = () => {
             value={context.codeInput}
             options={options}
             onMount={(editor) => {
+                wireJASSTmGrammars(editor).catch(console.error);
+
                 editor.onDidPaste(async () => {
                     const clipboardData = await navigator.clipboard.readText();
                     const transpiledCode = transcompile(clipboardData, context);
