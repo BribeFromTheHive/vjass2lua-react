@@ -5,9 +5,7 @@ import './buttons.css';
 
 const TopButtonsComponent = () => {
     const context = useContext(ConfigContext);
-    const { codeInput, setCodeInput } = context;
-
-    let isConverted = false;
+    const { prevText, isConverted, codeInput, setCodeInput } = context;
 
     return (
         <div className="button-container">
@@ -16,12 +14,11 @@ const TopButtonsComponent = () => {
                     text: 'Convert to Lua',
                     clickHandler: () => {
                         if (
-                            isConverted &&
+                            isConverted.current &&
                             /^--Conversion by vJass2Lua/m.test(codeInput)
                         ) {
                             throw new Error('Code already converted!');
                         } else {
-                            isConverted = true;
                             setCodeInput(transcompile(codeInput, context));
                         }
                     },
@@ -29,17 +26,12 @@ const TopButtonsComponent = () => {
                 {
                     text: 'Revert to vJass',
                     clickHandler: () => {
-                        const current =
-                            null; /*this needs to read the current textarea value*/
-                        const recent =
-                            ''; /*this just remembers the last pre-converted textarea value*/
                         if (
-                            isConverted /*this is a flag that tracks whether the text is flagged as converted or not*/ &&
-                            recent &&
-                            recent !== current
+                            isConverted.current &&
+                            prevText.current !== codeInput
                         ) {
-                            isConverted = false; //this flag can be set here as well as in the parser function.
-                            setCodeInput(recent);
+                            isConverted.current = false;
+                            setCodeInput(prevText.current);
                         }
                     },
                 },

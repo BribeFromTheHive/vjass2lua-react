@@ -132,19 +132,16 @@ export const parseFunctions = (functions: string, config: ConfigModel) => {
                         doEmmyParse('thistype', 'self');
                     }
                     if (!find.nothing.test(params)) {
-                        //console.log("params:", params);
+                        console.log("params:", params);
                         argsResult = params
                             .trim()
-                            .replace(
-                                getArgPairs,
-                                (_, type: string, name: string) => {
-                                    doEmmyParse(
-                                        convertJASSTypeToLua(type),
-                                        name,
-                                    );
-                                    return name;
-                                },
-                            );
+                            .replaceArray(getArgPairs, ([type, name], wholeMatch) => {
+                                if (!type || !name) {
+                                    throw new Error(`Regex Failed! wholeMatch: ${wholeMatch} type: ${type} name: ${name}`);
+                                }
+                                doEmmyParse(convertJASSTypeToLua(type), name);
+                                return name;
+                            });
                     }
 
                     let emmyResult = '',

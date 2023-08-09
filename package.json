@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@monaco-editor/react": "^4.5.1",
+    "monaco-jass-highlighter": "github:BribeFromTheHive/monaco-jass-highlighter",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },

@@ -5,7 +5,7 @@ const find = {
     endIfs: /^(?<indentAndEnd> *end)if/gm,
     chars: /'\\?(?<char>.)'/g, //convert 'a' or ';' into their integer equivalents.
     keywords: /^(?<indent> *)(?:set|call|constant) +/gm, //Keywords that don't exist in Lua
-    hexCodes: /\$(?<hex>[0-9a-fA-F]+[^$])/g, //JASS "$hexcode" must be converted to "0xhexcode" to work in Lua.
+    hexCodes: /\$(?<hex>[0-9a-fA-F]+\b[^$])/g, //JASS "$hexcode" must be converted to "0xhexcode" to work in Lua.
 };
 
 export const killSimpleJASSTokens = (jass: string, config: ConfigModel) =>

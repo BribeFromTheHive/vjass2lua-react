@@ -21,7 +21,7 @@ const invertedOperatorsMap = {
     '==': '~=',
 } as const;
 
-export function parseLoops(loops: string, config: ConfigModel) {
+export const parseLoops = (loops: string, config: ConfigModel) => {
     const repeatUntilReplacement = config.avoidRepeatUntil
         ? '$&'
         : 'repeat$<body>$<trailingWhitespace>until$<conditionLine>';
@@ -59,4 +59,4 @@ export function parseLoops(loops: string, config: ConfigModel) {
                 .replace(find.exitwhenTrues, 'break'),
         );
     });
-}
+};

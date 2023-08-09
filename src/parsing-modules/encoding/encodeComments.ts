@@ -5,7 +5,7 @@ export const insertBlockComment = (config: ConfigModel, comment: string) =>
     pack.encode.comment(config, `[[${comment}]]`);
 
 const find = {
-    preprocessors: /^([^/]?)\/\/!/gm,
+    preprocessors: /^( *)\/\/!/gm,
     comments: /\/\/(?<comment>.*)/g,
     safeBlockComments:
         /\/\*(?<comment>(?:(?!\*\/).)*?)\*\/(?<trailingText> *•.*?)*$/gms, //convert safe block comments that don't have trailing text at the end
@@ -14,8 +14,9 @@ const find = {
     unsafeComments: /\/\*(?:(?!\*\/).)*?\*\//gms,
 };
 
-export const encodeComments = (config: ConfigModel, mainParsedStr: string) =>
-    mainParsedStr
+export const encodeComments = (config: ConfigModel, mainParsedStr: string) => {
+    console.log('looking for comments in: ' + mainParsedStr);
+    return mainParsedStr
         .replace(find.preprocessors, '$1--!')
         .replaceNamed(find.comments, ({ comment = '' }) =>
             pack.encode.comment(config, comment),
@@ -31,3 +32,4 @@ export const encodeComments = (config: ConfigModel, mainParsedStr: string) =>
                 leadingText + insertBlockComment(config, comment),
         )
         .replace(find.unsafeComments, '');
+};

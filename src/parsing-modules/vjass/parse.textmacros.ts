@@ -6,8 +6,9 @@ const find = {
     takes: /^ takes *(.*)/m,
 };
 
-export const parseTextmacros = (mainParsedStr: string) =>
-    mainParsedStr
+export const parseTextmacros = (mainParsedStr: string) => {
+    console.log('finding any textmacros?', mainParsedStr);
+    return mainParsedStr
         .replace(
             find.textMacros,
             (_, indent: string, name: string, body: string) => {
@@ -38,3 +39,4 @@ export const parseTextmacros = (mainParsedStr: string) =>
                 return `${indent}vJass.runtextmacro("${name}${args}")`;
             },
         );
+};

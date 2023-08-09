@@ -15,9 +15,9 @@ export const encoder = (
     script = script
         .repeatAction(
             (str) =>
-                str.replace(
+                str.replaceArray(
                     find.tabs,
-                    (_, leadingChars) => {
+                    ([leadingChars = '']) => {
                         let len = leadingChars.length % spacing; //instead of zapping tabs to spacing...
                         len = spacing - len; //get the remaining length of tabs...
                         return leadingChars + ' '.repeat(len); //this preserves sub-indentation (such as when a user aligns = signs)

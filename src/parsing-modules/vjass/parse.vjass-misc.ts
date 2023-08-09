@@ -23,6 +23,8 @@ export const parsePreLocals = (mainParsedStr: string) =>
         .replace(find.methodCalls, (_, firstChar, methodCaller) =>
             `${
                 //Lua doesn't understand an isolated '.' as valid syntax, so we need to input 'self' as a prefix.
+                //This should already be handled by `find.isolatedDots` in parse.classes.ts, but it would need to be
+                //tested to see if just that one covers all use cases for this one as well.
                 firstChar === ' ' ? ' self' : firstChar
             }.${methodCaller}(`
                 //treat all x.method() as x:method() just in case we need to pass x as "self".

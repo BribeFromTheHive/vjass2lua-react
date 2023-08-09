@@ -9,6 +9,7 @@ import { parseLocals } from './vjass/parse.locals.ts';
 import { encoder } from './encoding/encoder.ts';
 import { decoder } from './encoding/decoder.ts';
 import { zincDispatcher } from './zinc/zincDispatcher.ts';
+import { parseTextmacros } from './vjass/parse.textmacros.ts';
 
 /**
  * Control the logical order in which code conversion takes place.
@@ -17,8 +18,10 @@ import { zincDispatcher } from './zinc/zincDispatcher.ts';
  * */
 export const transcompile = (
     script: string,
-    { spacing, config }: ConfigContextType,
+    { spacing, config, isConverted, prevText }: ConfigContextType,
 ) => {
+    prevText.current = script;
+
     const baseIndent = ' '.repeat(spacing);
 
     script = encoder(script, spacing, config);
@@ -29,6 +32,7 @@ export const transcompile = (
     script = parseContainers(script, baseIndent);
     script = parseLoops(script, config);
     script = parseGlobals(script);
+    script = parseTextmacros(script);
     script = parseClasses(script, baseIndent);
     script = parseFunctions(script, config);
 
@@ -37,5 +41,6 @@ export const transcompile = (
     if (config.autoCopy) {
         navigator.clipboard.writeText(script).catch(console.error);
     }
+    isConverted.current = true;
     return script;
 };

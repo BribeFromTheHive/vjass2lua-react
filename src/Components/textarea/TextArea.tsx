@@ -2,6 +2,9 @@ import { useContext } from 'react';
 import { transcompile } from '../../parsing-modules/transcompile.ts';
 import { ConfigContext } from '../../ConfigContext.ts';
 import MonacoEditor from '@monaco-editor/react';
+import { setupJass } from 'monaco-jass-highlighter';
+
+setupJass('/node_modules/onigasm/lib/onigasm.wasm').catch(console.error);
 
 const options = {
     selectOnLineNumbers: true,
@@ -17,7 +20,7 @@ const EditorComponent = () => {
         <MonacoEditor
             width="100%"
             height="400px"
-            language="lua"
+            language="jass"
             theme="vs-dark"
             value={context.codeInput}
             options={options}

@@ -1,14 +1,11 @@
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import './config.css';
-import {
-    configModel,
-    configOptionKeys,
-    configOptions,
-} from './config.model.ts';
+import { configOptionKeys, configOptions } from './config.model.ts';
+import { ConfigContext } from '../../ConfigContext.ts';
 
 const Config = () => {
-    const [spacing, setSpacing] = useState(4);
-    const [config, setConfig] = useState(configModel);
+    const { spacing, setSpacing, config, setConfig } =
+        useContext(ConfigContext);
     const [isOpen, setIsOpen] = useState(false);
 
     //config and spacing need to be able to be accessed by the parser function as well as by TextArea.tsx
@@ -16,11 +13,15 @@ const Config = () => {
     return (
         <div className="col-md-4">
             <details
-                className="config-details mt-2"
+                className={`config-details mt-2 ${
+                    isOpen
+                        ? 'config-details-expanded'
+                        : 'config-details-collapsed'
+                }`}
                 open={isOpen}
                 onToggle={() => setIsOpen(!isOpen)}
             >
-                <summary className="config-summary">
+                <summary>
                     <span className="config-icon">&#9776;</span> Configurables
                 </summary>
                 <label className="config-label d-flex align-items-center mt-3">
@@ -33,9 +34,9 @@ const Config = () => {
                         name="spacing"
                         className="custom-select"
                     >
-                        {[2, 3, 4, 6, 8].map((_, i) => (
-                            <option key={i} value={i + 1}>
-                                {i + 1}
+                        {[2, 3, 4, 6, 8].map((i) => (
+                            <option key={i} value={i}>
+                                {i}
                             </option>
                         ))}
                     </select>

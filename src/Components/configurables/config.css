@@ -1,9 +1,27 @@
 .config-details {
-    padding: 1rem;
-    overflow: auto;
-    position: relative;
-    grid-area: config;
-    display: block;
+    padding: 0.5rem;
+    display: flex;
+    flex-grow: 1;
+    transition: width 0.3s ease-in-out;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.config-details-collapsed {
+    width: fit-content; /* just enough for its content */
+    white-space: nowrap; /* prevent content from wrapping */
+}
+
+.config-details-expanded {
+    width: 25vw; /* 25% of the viewport width */
+    white-space: normal; /* allow content to wrap */
+    max-width: 100%;
+    position: absolute; /* this positions the details box relative to .editor-config-area */
+    right: 0; /* this aligns the right side of the details box with the right side of .editor-config-area */
+}
+
+details > summary {
+    list-style-type: none;
 }
 
 .config-summary {
@@ -17,7 +35,6 @@
 
 .config-label {
     display: flex;
-    align-items: center;
 }
 
 .config-label,
@@ -44,8 +61,7 @@
 
 input[type='checkbox'] {
     appearance: none;
-    background-color: #f1f1f1;
-    border: 1px solid #c6c6c6;
+    border: 1px solid;
     border-radius: 3px;
     width: 16px;
     height: 16px;
