@@ -1,5 +1,5 @@
 import { seekLineBreak } from '../parseHelpers.ts';
-import { rawVariable, captureVariable } from '../vjass/parse.vjass-misc';
+import { regexFragment } from '../regular-expressions/string-expression-builders.ts';
 
 export const replaceLineBreak = new RegExp(seekLineBreak, 'g'),
     getEndParenthesisIndex = (parenthesisStr: string, startingDepth = 0) => {
@@ -21,18 +21,18 @@ const confirmBracketKeywordCache = {} as Record<string, RegExp>,
     confirmBracketKeyword = (whichKeyWord: string, stringToMatch: string) => {
         if (!confirmBracketKeywordCache[whichKeyWord]) {
             confirmBracketKeywordCache[whichKeyWord] = new RegExp(
-                '\\W' + whichKeyWord + '\\W',
+                '\\W' + whichKeyWord + '\\W'
             );
         }
         return stringToMatch.match(confirmBracketKeywordCache[whichKeyWord]);
     };
-let addExtraEndBlock; //Meant for parsing stuff within Zinc functions.
+let addExtraEndBlock: boolean; //Meant for parsing stuff within Zinc functions.
 
 export const parseBracketContents = (
     bracketStr: string,
     inName: string,
     startingDepth = 0,
-    terminate = '',
+    terminate = ''
 ) => {
     let depth = startingDepth,
         lastDepthPoint = 0, //used for tracking regex keywords upon increasing the bracket depth
@@ -93,7 +93,7 @@ export const parseBracketContents = (
             if (
                 confirmBracketKeyword(
                     keyWord,
-                    bracketStr.substring(i - 1, j + 1),
+                    bracketStr.substring(i - 1, j + 1)
                 )
             ) {
                 let endPos;
@@ -103,7 +103,7 @@ export const parseBracketContents = (
                         break;
                     default:
                         endPos = getEndParenthesisIndex(
-                            bracketStr.substring(j),
+                            bracketStr.substring(j)
                         ); //fall through
                     case 'for':
                     case 'while':
@@ -123,7 +123,7 @@ export const parseBracketContents = (
 const parseZincFunctions = (str: string) => {
     return str.repeatAction((funcStr) => {
         const funcParts = funcStr.match(
-            /(function|(?:static\s+)?method)([^{}()]*)\(([^{}()]*)\)([^{}()]*)\{/,
+            /(function|(?:static\s+)?method)([^{}()]*)\(([^{}()]*)\)([^{}()]*)\{/
         );
         if (funcParts != null) {
             //[0] = whole string match - used for getting the length to determine how much of the substring to clip out.
@@ -148,7 +148,7 @@ const parseZincFunctions = (str: string) => {
             if (pos3 < 0)
                 throw new Error(
                     'syntax error: function without end bracket: ' +
-                        funcParts[0],
+                        funcParts[0]
                 );
 
             const contents = remainder.substring(0, pos3);
@@ -166,18 +166,18 @@ export const zincVarPrefix = 'KILL_THIS_ZINC_VAR_PREFIX_', //used to catch extra
 
         //pattern is set to capture two vJass variables (the first is assumed to be a type, but I will check against it later to make sure it's not a keyword).
         return new RegExp(
-            `${
-                deepSearch ? '^' : ''
-            }( *)(?:${zincVarPrefix})*(\\$?${rawVariable}\\b\\$?)${
+            `${deepSearch ? '^' : ''}( *)(?:${zincVarPrefix})*(\\$?${
+                regexFragment.rawVariable
+            }\\b\\$?)${
                 deepSearch
                     ? '(\\s*)((?:^ *•[^\\r\\n]*\\s*)*)' //extremely expensive operation, but includes comments as well as whitespace.
                     : '(\\s+)()'
-            }${captureVariable}${
+            }${regexFragment.captureVariable}${
                 i & 1 ? '\\s*(\\[[^\\[\\]]*?\\])' : '()' //a needless capture group is needed in order to preserve the sequence of the capture groups.
 
                 //pattern set to find a semicolon or comma, skips up to 2 levels of parenthesis (if present), then includes the remainder of the line.
             }([^;,(•]*?(?:\\([^()]*(?:\\([^()]*\\))*(?:[^()]*\\([^()]*\\))*[^()]*\\))*)\\s*([;,{}])( *•.*)*`,
 
-            deepSearch ? 'gm' : 'g',
+            deepSearch ? 'gm' : 'g'
         );
     });

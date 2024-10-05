@@ -5,6 +5,7 @@ import MonacoEditor from '@monaco-editor/react';
 import { wireJASSTmGrammars } from 'monaco-jass-highlighter';
 import { loadWASM } from 'onigasm';
 import wasmURL from '../../../node_modules/onigasm/lib/onigasm.wasm?url';
+import * as monaco from 'monaco-editor';
 
 loadWASM(wasmURL).catch(console.error);
 
@@ -26,8 +27,16 @@ const EditorComponent = () => {
             theme="vs-dark"
             value={context.codeInput}
             options={options}
-            onMount={(editor) => {
-                wireJASSTmGrammars(editor).catch(console.error);
+            onMount={async (editor) => {
+                await wireJASSTmGrammars(editor).catch(console.error);
+
+                console.log(editor.getModel()?.getLanguageId());
+
+                console.log(
+                    monaco.languages
+                        .getLanguages()
+                        .some((lang) => lang.id === 'jass'),
+                );
 
                 editor.onDidPaste(async () => {
                     const clipboardData = await navigator.clipboard.readText();

@@ -1,29 +1,13 @@
 import { convertJASSTypeToLua, getArgPairs } from '../parseHelpers.ts';
 import { isVarInt } from './parse.variables';
 import { ConfigModel } from '../../Components/configurables/config.model.ts';
-
-const find = {
-    floorInt: /[^/]\/[^/]/g,
-    execEval:
-        /(?<name>[\w$.]+)[:.](?<reference>name|(?:execute|evaluate))\b *(?<hasArgs>[(](?<args>[^()]*)[)])?/g,
-    customType:
-        /^(?<indent> *)(?:(?<scope>private|public) +)?type +(<?typeName>[\w$]+)(?<gap> +)extends(?<remainder>.*)/gm,
-    functionKeyword: /\bfunction\b/,
-    array: /^[^[]*\[ *([^,\] ]+)[^•\r\n]*(.*)/m,
-    fullFunction:
-        /^(?<indent> *)(?<func>(?:[\w$:[\]=]+ +)+?|[^\r\n]*?\bfunction )\btakes +(?<params>[$\w, ]+ +)+?\breturns +(?<rtype>[$\w]+)(?<contents>.+?\bend)function\b/gms,
-    functionRef: /function *([$\w]+(?:[.][\w$]+)? *[),])/g, //remove JASS code type reference (function foo => foo).
-    returnLine: /return.+\/.+/g,
-    variableAssignment: /([$\w]+) *=[^=\n\r•][^\n\r•]*/g,
-    nothing: /\bnothing\b/,
-    endFunction: /endfunction/g,
-} as const;
+import { regexJass } from '../regular-expressions/jass-expressions.ts';
 
 export const parseFunctions = (functions: string, config: ConfigModel) => {
     //Fix vJass dynamic function calling/referencing.
     functions = functions
         .replaceNamed(
-            find.execEval,
+            regexJass.namedCaptureGroups.execEval,
             ({ name, reference, hasArgs, args = '' }, ignoreMatch) => {
                 if (!reference || !name) {
                     throw new Error('Regex Failed');
@@ -35,24 +19,24 @@ export const parseFunctions = (functions: string, config: ConfigModel) => {
                     : !hasArgs
                     ? ignoreMatch //ExecuteFunc will ignore strings that are not pointing to functions stored in the _G table.
                     : `vJass.${reference}(${name}, ${args})`; //myFunction.execute(1, 10) becomes vJass.execute(myFunction, 1, 10)
-            },
+            }
         )
         .replaceNamed(
-            find.customType,
+            regexJass.namedCaptureGroups.customType,
             ({ indent, scope, typeName, gap = '', remainder = '' }) => {
                 if (!indent || !typeName) {
                     throw new Error('Regex failed.');
                 }
-                if (find.functionKeyword.test(remainder)) {
+                if (regexJass.noCaptureGroups.functionKeyword.test(remainder)) {
                     return `---@class ${typeName}:function --`; //function interface. Just declare it for Emmy annotation.
                 }
                 let size = '';
                 remainder = remainder.replace(
-                    find.array,
+                    regexJass.namedCaptureGroups.array,
                     (_, num: string, ending: string) => {
                         size = num;
                         return ending; //extract any comments the user may have included on the same line.
-                    },
+                    }
                 );
                 if (!size) {
                     return `${indent}---@class ${typeName}: ${gap} ${remainder}`;
@@ -66,20 +50,14 @@ export const parseFunctions = (functions: string, config: ConfigModel) => {
                 return `${
                     indent + typeName
                 } ${gap} = vJass.dynamicArray(${size})${remainder}`;
-            },
+            }
         );
 
     return functions
         .repeatAction((functions) => {
             return functions.replaceNamed(
-                find.fullFunction,
-                ({
-                    indent,
-                    func,
-                    params,
-                    rtype,
-                    contents,
-                }: Record<string, string | undefined>) => {
+                regexJass.namedCaptureGroups.fullFunction,
+                ({ indent, func, params, rtype, contents }) => {
                     if (!func || !rtype || !contents || !params) {
                         throw new Error('Regex failure');
                     }
@@ -90,8 +68,8 @@ export const parseFunctions = (functions: string, config: ConfigModel) => {
 
                     const doFloorInt = (line: string) =>
                         line.replace(
-                            find.floorInt,
-                            (div) => div[0] + '//' + div[2],
+                            regexJass.noCaptureGroups.floorInt,
+                            (div) => div[0] + '//' + div[2]
                         );
 
                     func = func.trim();
@@ -104,44 +82,60 @@ export const parseFunctions = (functions: string, config: ConfigModel) => {
                         }
                         if (rtype === 'integer') {
                             contents = contents.replace(
-                                find.returnLine,
-                                (returnLine) => doFloorInt(returnLine),
+                                regexJass.noCaptureGroups.returnLine,
+                                (returnLine) => doFloorInt(returnLine)
                             );
                         }
                     }
 
                     contents = contents
-                        .replace(find.functionRef, '$1')
-                        .replace(find.variableAssignment, (line, name) => {
-                            if (isVarInt(name)) {
-                                line = doFloorInt(line);
-                            } else if (name === 'self') {
-                                line += '; _ENV = Struct.environment(self)'; //needed for when the reference is reassigned after the fact.
+                        .replace(regexJass.singleCaptureGroup.functionRef, '$1')
+                        .replaceNamed(
+                            regexJass.namedCaptureGroups.variableAssignment,
+                            ({ varName }, wholeMatch) => {
+                                if (!varName) {
+                                    throw new Error('Regex Failed');
+                                }
+                                if (isVarInt(varName)) {
+                                    wholeMatch = doFloorInt(wholeMatch);
+                                } else if (wholeMatch === 'self') {
+                                    //needed for when the reference is reassigned after the fact.
+                                    wholeMatch +=
+                                        '; _ENV = Struct.environment(self)';
+                                }
+                                return wholeMatch;
                             }
-                            return line;
-                        });
+                        );
 
                     const doEmmyParse = (type: string, name: string) =>
                         emmyAnnotations.push(
                             config.useAlias
                                 ? `${name}: ${type}`
-                                : `${indent}---@param ${name} ${type}`,
+                                : `${indent}---@param ${name} ${type}`
                         );
 
                     if (func.includes(':')) {
                         doEmmyParse('thistype', 'self');
                     }
-                    if (!find.nothing.test(params)) {
-                        console.log("params:", params);
+                    if (!regexJass.noCaptureGroups.nothingKeyword.test(params)) {
+                        console.log('params:', params);
                         argsResult = params
                             .trim()
-                            .replaceArray(getArgPairs, ([type, name], wholeMatch) => {
-                                if (!type || !name) {
-                                    throw new Error(`Regex Failed! wholeMatch: ${wholeMatch} type: ${type} name: ${name}`);
+                            .replaceArray(
+                                getArgPairs,
+                                ([type, name], wholeMatch) => {
+                                    if (!type || !name) {
+                                        throw new Error(
+                                            `Regex Failed! wholeMatch: ${wholeMatch} type: ${type} name: ${name}`
+                                        );
+                                    }
+                                    doEmmyParse(
+                                        convertJASSTypeToLua(type),
+                                        name
+                                    );
+                                    return name;
                                 }
-                                doEmmyParse(convertJASSTypeToLua(type), name);
-                                return name;
-                            });
+                            );
                     }
 
                     let emmyResult = '',
@@ -153,7 +147,7 @@ export const parseFunctions = (functions: string, config: ConfigModel) => {
                         }
                         if (allowEmmyParse) {
                             emmyResult = `${indent}---@type fun(${emmyAnnotations.join(
-                                ', ',
+                                ', '
                             )})${returnEmmy}\n`;
                         }
                     } else {
@@ -162,8 +156,8 @@ export const parseFunctions = (functions: string, config: ConfigModel) => {
                     return `${
                         emmyResult + indent + func
                     }(${argsResult})${contents}`;
-                },
+                }
             );
         })
-        .replace(find.endFunction, 'end');
+        .replace(regexJass.noCaptureGroups.endFunctionKeyword, 'end');
 };

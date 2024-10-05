@@ -1,26 +1,27 @@
 import { convertJASSTypeToLua } from '../parseHelpers.ts';
 import { addToIntStack } from './parse.variables.ts';
-import { captureVariable } from '../vjass/parse.vjass-misc.ts';
 
-const seekIndent = '^ *',
-    captureToEOL = '(.*)',
-    seekArray = ' *\\[ *(\\d+) *\\]',
-    find = {
-        arrayDeclaration: new RegExp(
-            `${seekIndent + captureVariable} +array +${
-                captureVariable + captureToEOL
-            }`,
-            'm',
-        ),
-        twoDimensionalArray: new RegExp('^' + seekArray + seekArray, 'm'),
-        standardArray: new RegExp('^' + seekArray, 'm'),
-        standardVariable: new RegExp(
-            `${seekIndent + captureVariable}( +)${
-                captureVariable + captureToEOL
-            }`,
-            'm',
-        ),
-    };
+import { regexFragment } from '../regular-expressions/string-expression-builders.ts';
+
+const find = {
+    arrayDeclaration: new RegExp(
+        `${regexFragment.seekIndent + regexFragment.captureVariable} +array +${
+            regexFragment.captureVariable + regexFragment.captureToEOL
+        }`,
+        'm'
+    ),
+    twoDimensionalArray: new RegExp(
+        '^' + regexFragment.seekArray + regexFragment.seekArray,
+        'm'
+    ),
+    standardArray: new RegExp('^' + regexFragment.seekArray, 'm'),
+    standardVariable: new RegExp(
+        `${regexFragment.seekIndent + regexFragment.captureVariable}( +)${
+            regexFragment.captureVariable + regexFragment.captureToEOL
+        }`,
+        'm'
+    ),
+};
 
 export const parseVariable = (line: string, isLocal = false) => {
     //check for array declarations, first
@@ -33,13 +34,13 @@ export const parseVariable = (line: string, isLocal = false) => {
             let result = remainder.replace(
                 find.twoDimensionalArray,
                 (_, width, height) =>
-                    `${name}=vJass.array2D(${width}, ${height})${type}[][] `,
+                    `${name}=vJass.array2D(${width}, ${height})${type}[][] `
             );
             type += '[]';
             if (result === remainder) {
                 result = remainder.replace(
                     find.standardArray,
-                    (_, size) => `${name}={size=${size}}${type} `,
+                    (_, size) => `${name}={size=${size}}${type} `
                 );
                 if (result === remainder) {
                     let arrayType;
@@ -65,7 +66,7 @@ export const parseVariable = (line: string, isLocal = false) => {
                 }
             }
             return result;
-        },
+        }
     );
     if (newLine !== line) {
         return newLine; //array has been parsed
@@ -96,6 +97,6 @@ export const parseVariable = (line: string, isLocal = false) => {
                 return name + '=nil' + tail; //global variable declaration needs assignment to be valid syntax.
             }
             return name + tlen + remainder + tail; //variable with assignment has been parsed
-        },
+        }
     );
 };

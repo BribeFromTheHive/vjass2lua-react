@@ -1,42 +1,10 @@
 import { ignoredKeywords, seekLineBreakR } from '../parseHelpers.ts';
-import { captureVariable } from './parse.vjass-misc';
 import { parseVariable } from '../jass/parse.variable.ts';
 import { IgnoredKeyword } from '../ignoredKeywords.ts';
-
-const find = {
-    structs_or_modules:
-        /^(?<classIndent> *)(?<classScope>private|public)* *(?<whichClass>struct|module) *(?<className>[$\w]+) *(?<classBody>.+?^ *end)(?:struct|module)/gms,
-
-    extends: /[()] -- *extends +([$\w]+)/,
-
-    stubPrefixes: /\bstub\s+/g,
-    properties: /^( *)(static|readonly|public|private|method) +(.*)/gm,
-
-    //remove any case of 'static' and 'constant'.
-    static: /^( *)static *(?:constant +)*/m,
-    scopedStatics: /^( *)(public|private) *static(?: *constant)* +/gm,
-
-    method: /^(?:method)* *\b([$\w]+)\b(.*)/m,
-    endmethods: /\bendmethod\b/gm,
-
-    //implied 'this' in vJass doesn't work outside of structs, so we only need this replacer within a struct/module.
-    these: /\bthis\b/g,
-
-    //dot-syntax doesn't work in Lua without something before the dot.
-    isolatedDots: new RegExp(`([^\\w\\])])\\.${captureVariable}`, 'gm'),
-    implements: new RegExp(
-        `^( *)implement +(?:optional *)*${captureVariable}`,
-        'gm',
-    ),
-
-    operatorType: /^ *(?:(\[ *])|([$\w]+)) *(=*) *(.*)/m, //find which type of operator this is.
-    operatorGet: /takes +[$\w]+ +([$\w]+\b|\$).*/, //find an operator with one parameter.
-    operatorSet: /takes +[$\w]+ +([$\w]+) *, *[$\w]+ *([$\w]+\b|\$).*/, //find an operator with two parameters.
-    operatorBodies: /thistype:_operator[gs]et[(].*?endmethod/gs, //needed to close off method operators with a parenthesis.
-
-    arrays: /([\w$]+) +array +([\w$]+)/g,
-    variables: /(?<!function[\s\S]+)([\w$]+) +([\w$]+)/g,
-};
+import {
+    find,
+    regexStructs,
+} from '../regular-expressions/struct-expressions.ts';
 
 export const parseStructVar = (wholeMatch: string, w1: string, w2: string) => {
     if (
@@ -49,8 +17,9 @@ export const parseStructVar = (wholeMatch: string, w1: string, w2: string) => {
 };
 
 export const parseClasses = (classInput: string, baseIndent: string) =>
-    classInput.replaceNamed(find.structs_or_modules, (captureGroups) =>
-        parseClass(captureGroups, baseIndent),
+    classInput.replaceNamed(
+        regexStructs.namedCaptureGroups.structs_or_modules,
+        (captureGroups) => parseClass(captureGroups, baseIndent)
     );
 
 const parseClass = (
@@ -61,7 +30,7 @@ const parseClass = (
         className,
         classBody,
     }: Record<string, string | undefined>,
-    baseIndent: string,
+    baseIndent: string
 ) => {
     if (!classBody) {
         throw new Error('Regex Failed');
@@ -100,35 +69,35 @@ const parseClass = (
                                                 isBracket: string,
                                                 opName: string,
                                                 isSetter: string,
-                                                opEOL: string,
+                                                opEOL: string
                                             ) =>
                                                 isBracket
                                                     ? isSetter
                                                         ? `function thistype:_setindex(${opEOL.replace(
                                                               find.operatorSet,
-                                                              '$1, $2)',
+                                                              '$1, $2)'
                                                           )}`
                                                         : `function thistype:_getindex(${opEOL.replace(
                                                               find.operatorGet,
-                                                              '$1)',
+                                                              '$1)'
                                                           )}`
                                                     : isSetter
                                                     ? `thistype:_operatorset('${opName}', ${opEOL.replace(
                                                           find.operatorGet,
-                                                          'function(self, $1)',
+                                                          'function(self, $1)'
                                                       )})`
-                                                    : `thistype:_operatorget('${opName}', function(self)`,
+                                                    : `thistype:_operatorget('${opName}', function(self)`
                                         )
                                       : `function ${propScope}:${
                                             methodName + methodEOL
-                                        }`,
+                                        }`
                           ) +
                           `\n${
                               propIndent + baseIndent
                           }local _ENV = Struct.environment(self)` //help Lua know when to pick up invisible 'self' references.
                         : `${propScope}.${parseVariable(propLine)}`)
                 );
-            },
+            }
         )
         .replace(find.operatorBodies, (operator) => `${operator})`)
         .replace(find.endmethods, 'endfunction');
@@ -141,7 +110,7 @@ const parseClass = (
             classHeader ? ` --${classHeader}` : ''
         }`.replace(
             find.extends,
-            (_, extended) => `(${extended !== 'array' ? extended : ''}) --`,
+            (_, extended) => `(${extended !== 'array' ? extended : ''}) --`
         );
         if (classScope) {
             classHeader = 'local ' + classHeader;
@@ -155,16 +124,16 @@ const parseClass = (
         .replace(find.isolatedDots, '$1self.$2')
         .replace(
             find.implements,
-            `$1vJass.implement('$2', SCOPE_PREFIX, thistype)`,
+            `$1vJass.implement('$2', SCOPE_PREFIX, thistype)`
         )
         .repeatAction((vars) =>
             vars
                 .replace(find.arrays, parseStructVar)
-                .replace(find.variables, parseStructVar),
+                .replace(find.variables, parseStructVar)
         )
         .replace(
             find.scopedStatics,
-            (_, indent, scope) => `${indent + (scope || 'thistype')}.`,
+            (_, indent, scope) => `${indent + (scope || 'thistype')}.`
         );
     if (!isModule) {
         classBody = `do\n${classIndent + baseIndent}local thistype = ${

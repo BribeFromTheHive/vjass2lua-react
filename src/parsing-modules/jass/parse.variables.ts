@@ -1,9 +1,10 @@
 import { parseVariable } from './parse.variable.ts';
 
-const identifiedIntegers = new Map();
+const identifiedIntegers = new Set<string>();
 
-export const isVarInt = (varName: string) => identifiedIntegers.has(varName),
-    addToIntStack = (varName: string) => identifiedIntegers.set(varName, true);
+export const
+    isVarInt = (varName: string) => identifiedIntegers.has(varName),
+    addToIntStack = (varName: string) => identifiedIntegers.add(varName);
 
 export const parseVariables = (variables: string) =>
     variables
@@ -20,7 +21,7 @@ export const parseVariables = (variables: string) =>
                     return `${body}\n${indent}_G[SCOPE_PREFIX..'${name}'] = ${name}`;
                 }
                 return body;
-            },
+            }
         )
         .replace(/^( *)private +keyword\b/gm, '$1local')
         .replace(

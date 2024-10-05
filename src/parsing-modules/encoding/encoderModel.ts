@@ -7,7 +7,7 @@ type PackageCode<T> = { [key in PackageType]: T };
 export const pack = {
     encode: {} as PackageCode<(config: ConfigModel, str: string) => string>,
     decode: {} as PackageCode<(str: string) => string>,
-};
+} as const;
 
 const packageConfigurations = [
     { whichType: 'comment', encoding: 'cmt' },
